@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家族の持ち物リスト</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #FFF8F0 0%, #F0F4FF 100%); font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; min-height: 100vh; }
+  input, button { font-family: inherit; }
+  ::-webkit-scrollbar { height: 4px; }
+  ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ==================== シーン定義 ====================
+const SCENES = [
+  { id: "travel", label: "旅行", emoji: "✈️", color: "#4A90D9", grad: "linear-gradient(135deg, #4A90D9 0%, #6B5CE7 100%)" },
+  { id: "hospital", label: "入院", emoji: "🏥", color: "#E07A5F", grad: "linear-gradient(135deg, #E07A5F 0%, #C0392B 100%)" },
+];
+
+// ==================== 旅行データ ====================
+const TRAVEL_TRAVELERS = [
+  { id: "adult_f", label: "母", emoji: "👩", color: "#E07A5F" },
+  { id: "adult_m", label: "父", emoji: "🧑", color: "#4A90D9" },
+  { id: "child4", label: "こはる", emoji: "👧", color: "#FF6B9D" },
+  { id: "child2", label: "みゆ", emoji: "👶", color: "#9B59B6" },
+  { id: "kids_common", label: "子ども共通", emoji: "👧👶", color: "#2EC4B6" },
+];
+
+const TRAVEL_CATEGORIES = [
+  { id: "docs", label: "📄 重要書類・医療", color: "#4A90D9" },
+  { id: "hygiene", label: "🧴 衛生用品", color: "#81B29A" },
+  { id: "food", label: "🍱 食事用品", color: "#FF9F1C" },
+  { id: "clothes", label: "👕 衣類・服飾", color: "#E07A5F" },
+  { id: "move", label: "🚗 移動・便利グッズ", color: "#6B5CE7" },
+  { id: "play", label: "🎮 遊び・暇つぶし", color: "#F2CC8F" },
+  { id: "backpack", label: "🎒 リュック", color: "#2EC4B6" },
+  { id: "bag", label: "👜 バッグ・手荷物", color: "#C77DFF" },
+  { id: "beauty", label: "💄 女性向け", color: "#FF6B9D" },
+];
+
+const TRAVEL_NIGHTS_DEPENDENT = [
+  { traveler: "adult_f", id: 20, getName: (n) => `服 × ${n + 1}日分` },
+  { traveler: "adult_f", id: 21, getName: (n) => `下着類 × ${n + 2}日分` },
+  { traveler: "adult_f", id: 22, getName: (n) => `靴下 × ${n + 2}日分` },
+  { traveler: "adult_m", id: 1, getName: (n) => `服 × ${n + 1}日分` },
+  { traveler: "adult_m", id: 2, getName: (n) => `下着類 × ${n + 2}日分` },
+  { traveler: "adult_m", id: 3, getName: (n) => `靴下 × ${n + 2}日分` },
+  { traveler: "child4", id: 30, getName: (n) => `着替え × ${n + 2}セット（予備含む）` },
+  { traveler: "child4", id: 34, getName: (n) => `下着（上下）× ${n + 1}` },
+  { traveler: "child4", id: 35, getName: (n) => `靴下 × ${n + 1}` },
+  { traveler: "child2", id: 30, getName: (n) => `着替え × ${n + 3}セット（予備多め）` },
+  { traveler: "child2", id: 34, getName: (n) => `下着（上下）× ${n + 2}` },
+  { traveler: "child2", id: 35, getName: (n) => `靴下 × ${n + 2}` },
+];
+
+function generateTravelItems(n) {
+  return {
+    adult_f: [
+      { id: 1, name: "保険証", category: "docs", checked: false },
+      { id: 10, name: "マスク", category: "hygiene", checked: false },
+      { id: 11, name: "お風呂セット（ブラシ・シャンプー・ボディソープ、ボディタオル）", category: "hygiene", checked: false },
+      { id: 12, name: "歯ブラシ", category: "hygiene", checked: false },
+      { id: 13, name: "常備薬", category: "hygiene", checked: false },
+      { id: 14, name: "絆創膏", category: "hygiene", checked: false },
+      { id: 20, name: `服 × ${n + 1}日分`, category: "clothes", checked: false },
+      { id: 21, name: `下着類 × ${n + 2}日分`, category: "clothes", checked: false },
+      { id: 22, name: `靴下 × ${n + 2}日分`, category: "clothes", checked: false },
+      { id: 23, name: "ルームウェア", category: "clothes", checked: false },
+      { id: 24, name: "水着", category: "clothes", checked: false },
+      { id: 25, name: "帽子", category: "clothes", checked: false },
+      { id: 26, name: "マフラー・手袋", category: "clothes", checked: false },
+      { id: 30, name: "洗濯ネット", category: "move", checked: false },
+      { id: 31, name: "雨具（レインコート・折りたたみ傘、レインブーツ）", category: "move", checked: false },
+      { id: 32, name: "充電器類", category: "move", checked: false },
+      { id: 33, name: "使い捨てスリッパ", category: "move", checked: false },
+      { id: 34, name: "サングラス", category: "move", checked: false },
+      { id: 40, name: "現金", category: "bag", checked: false },
+      { id: 41, name: "モバイルバッテリー", category: "bag", checked: false },
+      { id: 42, name: "財布", category: "bag", checked: false },
+      { id: 43, name: "チケット類", category: "bag", checked: false },
+      { id: 44, name: "スマホ", category: "bag", checked: false },
+      { id: 45, name: "ポータブル充電器", category: "bag", checked: false },
+      { id: 46, name: "家の鍵", category: "bag", checked: false },
+      { id: 47, name: "ハンカチ・ティッシュ", category: "bag", checked: false },
+      { id: 48, name: "イヤホン", category: "bag", checked: false },
+      { id: 49, name: "カメラ", category: "bag", checked: false },
+      { id: 50, name: "エコバッグ", category: "bag", checked: false },
+      { id: 60, name: "メイク道具（パフ、下地、おしろい）", category: "beauty", checked: false },
+      { id: 61, name: "メイク落とし（クレンジング）", category: "beauty", checked: false },
+      { id: 62, name: "基礎化粧品（化粧水、乳液、パック）", category: "beauty", checked: false },
+      { id: 63, name: "アクセサリーケース", category: "beauty", checked: false },
+      { id: 64, name: "生理用品、ショーツ", category: "beauty", checked: false },
+      { id: 65, name: "日焼け止め", category: "beauty", checked: false },
+      { id: 66, name: "ヘアアイロン・ヘアブラシ", category: "beauty", checked: false },
+      { id: 67, name: "洗顔、洗顔タオル", category: "beauty", checked: false },
+      { id: 68, name: "ヘアバンド", category: "beauty", checked: false },
+      { id: 69, name: "アロマ・コットン", category: "beauty", checked: false },
+    ],
+    adult_m: [
+      { id: 1, name: `服 × ${n + 1}日分`, category: "clothes", checked: false },
+      { id: 2, name: `下着類 × ${n + 2}日分`, category: "clothes", checked: false },
+      { id: 3, name: `靴下 × ${n + 2}日分`, category: "clothes", checked: false },
+      { id: 4, name: "コンタクト用品・メガネ", category: "clothes", checked: false },
+      { id: 5, name: "常備薬", category: "docs", checked: false },
+      { id: 6, name: "マスク", category: "hygiene", checked: false },
+      { id: 8, name: "お風呂セット（ブラシ・シャンプー・ボディソープ）", category: "hygiene", checked: false },
+      { id: 11, name: "現金", category: "bag", checked: false },
+      { id: 12, name: "モバイルバッテリー", category: "bag", checked: false },
+      { id: 20, name: "財布", category: "bag", checked: false },
+      { id: 21, name: "チケット類", category: "bag", checked: false },
+      { id: 22, name: "スマホ", category: "bag", checked: false },
+      { id: 23, name: "ポータブル充電器", category: "bag", checked: false },
+      { id: 24, name: "家の鍵", category: "bag", checked: false },
+      { id: 25, name: "ハンカチ・ティッシュ", category: "bag", checked: false },
+      { id: 26, name: "イヤホン", category: "bag", checked: false },
+      { id: 27, name: "カメラ", category: "bag", checked: false },
+      { id: 28, name: "エコバッグ", category: "bag", checked: false },
+      { id: 35, name: "歯ブラシ", category: "hygiene", checked: false },
+      { id: 36, name: "ルームウェア", category: "clothes", checked: false },
+      { id: 37, name: "日焼け止め", category: "hygiene", checked: false },
+      { id: 38, name: "絆創膏", category: "hygiene", checked: false },
+      { id: 39, name: "使い捨てスリッパ", category: "move", checked: false },
+      { id: 40, name: "水着", category: "clothes", checked: false },
+      { id: 41, name: "サングラス", category: "move", checked: false },
+      { id: 42, name: "帽子", category: "clothes", checked: false },
+      { id: 43, name: "洗濯ネット", category: "move", checked: false },
+      { id: 44, name: "雨具（レインコート・折りたたみ傘）", category: "move", checked: false },
+      { id: 45, name: "充電器類", category: "move", checked: false },
+    ],
+    child4: [
+      { id: 1, name: "母子手帳コピー", category: "docs", checked: false },
+      { id: 2, name: "健康保険証", category: "docs", checked: false },
+      { id: 3, name: "乳幼児医療証", category: "docs", checked: false },
+      { id: 4, name: "お薬手帳", category: "docs", checked: false },
+      { id: 5, name: "常備薬（こはる用）", category: "docs", checked: false },
+      { id: 30, name: `着替え × ${n + 2}セット（予備含む）`, category: "clothes", checked: false },
+      { id: 31, name: "パジャマ", category: "clothes", checked: false },
+      { id: 32, name: "薄手の羽織もの", category: "clothes", checked: false },
+      { id: 33, name: "防寒着（季節による）", category: "clothes", checked: false },
+      { id: 34, name: `下着（上下）× ${n + 1}`, category: "clothes", checked: false },
+      { id: 35, name: `靴下 × ${n + 1}`, category: "clothes", checked: false },
+      { id: 36, name: "靴（当日履くもの＋予備）", category: "clothes", checked: false },
+      { id: 37, name: "帽子", category: "clothes", checked: false },
+      { id: 38, name: "サンダル（夏場）", category: "clothes", checked: false },
+      { id: 39, name: "スリーパー（寒い時期）", category: "clothes", checked: false },
+    ],
+    child2: [
+      { id: 1, name: "母子手帳コピー", category: "docs", checked: false },
+      { id: 2, name: "健康保険証", category: "docs", checked: false },
+      { id: 3, name: "乳幼児医療証", category: "docs", checked: false },
+      { id: 4, name: "お薬手帳", category: "docs", checked: false },
+      { id: 5, name: "常備薬（みゆ用）", category: "docs", checked: false },
+      { id: 10, name: "紙おむつ × 必要数＋予備（目安：12枚）", category: "hygiene", checked: false },
+      { id: 11, name: "おしりふき × 2パック（＋予備セット）", category: "hygiene", checked: false },
+      { id: 30, name: `着替え × ${n + 3}セット（予備多め）`, category: "clothes", checked: false },
+      { id: 31, name: "パジャマ", category: "clothes", checked: false },
+      { id: 32, name: "薄手の羽織もの", category: "clothes", checked: false },
+      { id: 33, name: "防寒着（季節による）", category: "clothes", checked: false },
+      { id: 34, name: `下着（上下）× ${n + 2}`, category: "clothes", checked: false },
+      { id: 35, name: `靴下 × ${n + 2}`, category: "clothes", checked: false },
+      { id: 36, name: "靴（当日履くもの＋予備）", category: "clothes", checked: false },
+      { id: 37, name: "帽子", category: "clothes", checked: false },
+      { id: 38, name: "サンダル（夏場）", category: "clothes", checked: false },
+      { id: 39, name: "スリーパー（寒い時期）", category: "clothes", checked: false },
+      { id: 40, name: "スタイ（必要に応じて）", category: "clothes", checked: false },
+    ],
+    kids_common: [
+      { id: 1, name: "日焼け止め", category: "hygiene", checked: false },
+      { id: 2, name: "マスク（必要に応じて）", category: "hygiene", checked: false },
+      { id: 3, name: "ウェットティッシュ", category: "hygiene", checked: false },
+      { id: 4, name: "除菌ジェル", category: "hygiene", checked: false },
+      { id: 5, name: "ビニール袋（大・小・防臭タイプ）", category: "hygiene", checked: false },
+      { id: 6, name: "ジップ付きビニール袋", category: "hygiene", checked: false },
+      { id: 7, name: "子ども用歯ブラシ・歯磨き粉（うがい不要タイプ）×2", category: "hygiene", checked: false },
+      { id: 8, name: "ベビー綿棒", category: "hygiene", checked: false },
+      { id: 9, name: "爪切り", category: "hygiene", checked: false },
+      { id: 10, name: "保湿クリーム", category: "hygiene", checked: false },
+      { id: 11, name: "携帯用トイレ（あると安心）", category: "hygiene", checked: false },
+      { id: 12, name: "絆創膏・消毒液・虫除けスプレー・かゆみ止め", category: "hygiene", checked: false },
+      { id: 13, name: "バスタオル", category: "hygiene", checked: false },
+      { id: 14, name: "フェイスタオル", category: "hygiene", checked: false },
+      { id: 15, name: "ガーゼタオル", category: "hygiene", checked: false },
+      { id: 16, name: "ベビーシャンプー・ベビーソープ", category: "hygiene", checked: false },
+      { id: 17, name: "体温計", category: "hygiene", checked: false },
+      { id: 18, name: "ブラシ・ゴム", category: "hygiene", checked: false },
+      { id: 20, name: "ストローマグ or 水筒 ×2", category: "food", checked: false },
+      { id: 21, name: "子ども用スプーン・フォーク・箸", category: "food", checked: false },
+      { id: 22, name: "食事用エプロン", category: "food", checked: false },
+      { id: 23, name: "フードカッター（取り分け用）", category: "food", checked: false },
+      { id: 24, name: "離乳食・ベビーフード（みゆ用）", category: "food", checked: false },
+      { id: 25, name: "哺乳瓶・固形ミルク・ミルク用お湯", category: "food", checked: false },
+      { id: 26, name: "飲み物（お茶・水など）", category: "food", checked: false },
+      { id: 27, name: "紙パックドリンクホルダー", category: "food", checked: false },
+      { id: 30, name: "ベビーカー", category: "move", checked: false },
+      { id: 31, name: "抱っこ紐 or ヒップシート", category: "move", checked: false },
+      { id: 32, name: "スカーフ（防寒・荷物代わり）", category: "move", checked: false },
+      { id: 33, name: "スマートキッズベルト（車移動の場合）", category: "move", checked: false },
+      { id: 34, name: "チェアベルト（外食用）", category: "move", checked: false },
+      { id: 35, name: "レジャーシート", category: "move", checked: false },
+      { id: 36, name: "保冷バッグ（夏場の食事持ち歩きに）", category: "move", checked: false },
+      { id: 37, name: "雨具（レインコート・折りたたみ傘・レインブーツ）", category: "move", checked: false },
+      { id: 40, name: "お気に入りおもちゃ（折り紙・塗り絵など）", category: "play", checked: false },
+      { id: 41, name: "音が出ない新しいおもちゃ（静かに遊べるもの）", category: "play", checked: false },
+      { id: 42, name: "お菓子・ドリンク", category: "play", checked: false },
+      { id: 43, name: "動画・音楽（事前にダウンロード）", category: "play", checked: false },
+      { id: 44, name: "（夏）ミニ扇風機、水着、浮き輪、サンダル", category: "play", checked: false },
+      { id: 45, name: "（冬）スノーブーツ", category: "play", checked: false },
+      { id: 50, name: "オムツ、おしりふき、簡易便座", category: "backpack", checked: false },
+      { id: 51, name: "ウェットティッシュ", category: "backpack", checked: false },
+      { id: 52, name: "ビニール袋", category: "backpack", checked: false },
+      { id: 53, name: "ハンカチ・ポケットティッシュ", category: "backpack", checked: false },
+      { id: 54, name: "帽子", category: "backpack", checked: false },
+      { id: 55, name: "着替え上下×2", category: "backpack", checked: false },
+    ],
+  };
+}
+
+// ==================== 入院データ ====================
+const HOSPITAL_TRAVELERS = [
+  { id: "child", label: "子ども", emoji: "🧒", color: "#81B29A" },
+  { id: "mother", label: "付き添い母", emoji: "👩", color: "#E07A5F" },
+];
+
+const HOSPITAL_CATEGORIES = [
+  { id: "docs", label: "📄 重要書類・医療", color: "#4A90D9" },
+  { id: "hygiene", label: "🧴 衛生用品", color: "#81B29A" },
+  { id: "food", label: "🍱 食事・飲み物", color: "#FF9F1C" },
+  { id: "clothes", label: "👕 衣類", color: "#E07A5F" },
+  { id: "play", label: "🎮 遊び・暇つぶし", color: "#F2CC8F" },
+  { id: "work", label: "💼 仕事道具", color: "#6B5CE7" },
+  { id: "bag", label: "👜 手荷物", color: "#C77DFF" },
+];
+
+function generateHospitalItems() {
+  return {
+    child: [
+      { id: 1, name: "母子手帳", category: "docs", checked: false },
+      { id: 2, name: "健康保険証", category: "docs", checked: false },
+      { id: 3, name: "乳幼児医療証", category: "docs", checked: false },
+      { id: 4, name: "お薬手帳", category: "docs", checked: false },
+      { id: 10, name: "歯ブラシセット", category: "hygiene", checked: false },
+      { id: 11, name: "つめきり", category: "hygiene", checked: false },
+      { id: 12, name: "おむつ・おしりふき", category: "hygiene", checked: false },
+      { id: 20, name: "食べやすいもの", category: "food", checked: false },
+      { id: 21, name: "飲み物", category: "food", checked: false },
+      { id: 30, name: "着替え × 5（部屋温度に合わせる）", category: "clothes", checked: false },
+      { id: 31, name: "下着 上下 × 5", category: "clothes", checked: false },
+      { id: 32, name: "サンダル", category: "clothes", checked: false },
+      { id: 40, name: "タブレット", category: "play", checked: false },
+      { id: 41, name: "おもちゃ", category: "play", checked: false },
+    ],
+    mother: [
+      { id: 10, name: "歯ブラシ", category: "hygiene", checked: false },
+      { id: 11, name: "お風呂道具（シャンプー・ボディソープ・ボディタオル）", category: "hygiene", checked: false },
+      { id: 12, name: "タオル 10枚", category: "hygiene", checked: false },
+      { id: 13, name: "シャワーシート", category: "hygiene", checked: false },
+      { id: 14, name: "ドライスプレー", category: "hygiene", checked: false },
+      { id: 15, name: "コインランドリー用洗濯洗剤", category: "hygiene", checked: false },
+      { id: 16, name: "アイマスク", category: "hygiene", checked: false },
+      { id: 17, name: "ナプキン・ショーツ", category: "hygiene", checked: false },
+      { id: 18, name: "洗顔・ヘアバンド", category: "hygiene", checked: false },
+      { id: 19, name: "化粧水", category: "hygiene", checked: false },
+      { id: 20, name: "箸", category: "food", checked: false },
+      { id: 21, name: "ティッシュペーパー", category: "food", checked: false },
+      { id: 22, name: "ラップ", category: "food", checked: false },
+      { id: 23, name: "紙コップ", category: "food", checked: false },
+      { id: 24, name: "ストロー", category: "food", checked: false },
+      { id: 25, name: "わりばし", category: "food", checked: false },
+      { id: 26, name: "ウェットティッシュ", category: "food", checked: false },
+      { id: 27, name: "ビニール袋（大・中・小）", category: "food", checked: false },
+      { id: 28, name: "飲み物", category: "food", checked: false },
+      { id: 30, name: "着替え × 3日", category: "clothes", checked: false },
+      { id: 31, name: "下着 × 3日", category: "clothes", checked: false },
+      { id: 32, name: "サンダル", category: "clothes", checked: false },
+      { id: 40, name: "パソコン", category: "work", checked: false },
+      { id: 41, name: "スマホスタンド", category: "work", checked: false },
+      { id: 42, name: "イヤホン", category: "work", checked: false },
+      { id: 43, name: "三脚", category: "work", checked: false },
+      { id: 50, name: "現金", category: "bag", checked: false },
+      { id: 51, name: "マスク", category: "bag", checked: false },
+      { id: 52, name: "ボールペン", category: "bag", checked: false },
+      { id: 53, name: "メモ帳orノート", category: "bag", checked: false },
+    ],
+  };
+}
+
+// ==================== 共通PackingList コンポーネント ====================
+function PackingList({ scene, onBack }) {
+  const isTravel = scene.id === "travel";
+  const TRAVELERS = isTravel ? TRAVEL_TRAVELERS : HOSPITAL_TRAVELERS;
+  const CATEGORIES = isTravel ? TRAVEL_CATEGORIES : HOSPITAL_CATEGORIES;
+  const defaultItems = isTravel ? generateTravelItems(1) : generateHospitalItems();
+
+  const [nights, setNights] = useState(1);
+  const [activeTravelers, setActiveTravelers] = useState(TRAVELERS.map(t => t.id));
+  const [selectedTraveler, setSelectedTraveler] = useState(TRAVELERS[0].id);
+  const [items, setItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`packing-base-${scene.id}`);
+      if (saved) {
+        const base = JSON.parse(saved);
+        const fresh = {};
+        Object.keys(base).forEach(k => { fresh[k] = base[k].map(i => ({ ...i, checked: false })); });
+        return fresh;
+      }
+    } catch(e) {}
+    return defaultItems;
+  });
+  const [baseItems, setBaseItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`packing-base-${scene.id}`);
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return defaultItems;
+  });
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemCategory, setNewItemCategory] = useState(CATEGORIES[0].id);
+  const [showForgottenOnly, setShowForgottenOnly] = useState(false);
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editingName, setEditingName] = useState("");
+  const [isBaseEditMode, setIsBaseEditMode] = useState(false);
+
+  const saveBase = (newBase) => {
+    try { localStorage.setItem(`packing-base-${scene.id}`, JSON.stringify(newBase)); } catch(e) {}
+  };
+
+  const changeNights = (n) => {
+    setNights(n);
+    if (!isTravel) return;
+    setItems(prev => {
+      const next = { ...prev };
+      TRAVEL_NIGHTS_DEPENDENT.forEach(({ traveler, id, getName }) => {
+        if (next[traveler]) next[traveler] = next[traveler].map(item => item.id === id ? { ...item, name: getName(n) } : item);
+      });
+      return next;
+    });
+  };
+
+  const toggleTraveler = (id) => {
+    const isActive = activeTravelers.includes(id);
+    if (isActive) {
+      const next = activeTravelers.filter(t => t !== id);
+      setActiveTravelers(next);
+      if (selectedTraveler === id) setSelectedTraveler(next[0] || null);
+    } else {
+      setActiveTravelers(prev => [...prev, id]);
+      setSelectedTraveler(id);
+    }
+  };
+
+  const toggleItem = (traveler, itemId) => {
+    if (isBaseEditMode) return;
+    setItems(prev => ({ ...prev, [traveler]: prev[traveler].map(item => item.id === itemId ? { ...item, checked: !item.checked } : item) }));
+  };
+
+  const addItem = () => {
+    if (!newItemName.trim()) return;
+    const newItem = { id: Date.now(), name: newItemName.trim(), category: newItemCategory, checked: false };
+    if (isBaseEditMode) {
+      const newBase = { ...baseItems, [selectedTraveler]: [...(baseItems[selectedTraveler] || []), newItem] };
+      setBaseItems(newBase); setItems(prev => ({ ...prev, [selectedTraveler]: [...(prev[selectedTraveler] || []), newItem] })); saveBase(newBase);
+    } else {
+      setItems(prev => ({ ...prev, [selectedTraveler]: [...prev[selectedTraveler], newItem] }));
+    }
+    setNewItemName("");
+  };
+
+  const deleteItem = (traveler, itemId) => {
+    if (isBaseEditMode) {
+      const newBase = { ...baseItems, [traveler]: baseItems[traveler].filter(i => i.id !== itemId) };
+      setBaseItems(newBase); setItems(prev => ({ ...prev, [traveler]: prev[traveler].filter(i => i.id !== itemId) })); saveBase(newBase);
+    } else {
+      setItems(prev => ({ ...prev, [traveler]: prev[traveler].filter(i => i.id !== itemId) }));
+    }
+  };
+
+  const startEdit = (item) => { setEditingItemId(item.id); setEditingName(item.name); };
+  const saveEdit = (traveler, itemId) => {
+    if (!editingName.trim()) return;
+    if (isBaseEditMode) {
+      const newBase = { ...baseItems, [traveler]: baseItems[traveler].map(i => i.id === itemId ? { ...i, name: editingName.trim() } : i) };
+      setBaseItems(newBase); setItems(prev => ({ ...prev, [traveler]: prev[traveler].map(i => i.id === itemId ? { ...i, name: editingName.trim() } : i) })); saveBase(newBase);
+    } else {
+      setItems(prev => ({ ...prev, [traveler]: prev[traveler].map(i => i.id === itemId ? { ...i, name: editingName.trim() } : i) }));
+    }
+    setEditingItemId(null); setEditingName("");
+  };
+
+  const currentItems = items[selectedTraveler] || [];
+  const filteredItems = currentItems.filter(item => {
+    if (showForgottenOnly && item.checked) return false;
+    if (selectedCategory !== "all" && item.category !== selectedCategory) return false;
+    return true;
+  });
+  const checkedCount = currentItems.filter(i => i.checked).length;
+  const totalCount = currentItems.length;
+  const progress = totalCount === 0 ? 0 : Math.round(checkedCount / totalCount * 100);
+  const travelerData = TRAVELERS.find(t => t.id === selectedTraveler);
+  const allChecked = activeTravelers.reduce((sum, t) => sum + (items[t]?.filter(i => i.checked).length || 0), 0);
+  const allTotal = activeTravelers.reduce((sum, t) => sum + (items[t]?.length || 0), 0);
+  const usedCategoryIds = [...new Set(currentItems.map(i => i.category))];
+
+  return (
+    <div style={{ minHeight: "100vh", paddingBottom: 80 }}>
+      {/* Header */}
+      <div style={{ background: scene.grad, padding: "20px 20px 24px", color: "white", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.1)" }} />
+        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", borderRadius: 20, padding: "4px 14px", fontSize: 13, cursor: "pointer", marginBottom: 10 }}>← ホーム</button>
+        <div style={{ fontSize: 11, opacity: 0.8, letterSpacing: 2, marginBottom: 4 }}>{scene.emoji} {scene.label.toUpperCase()} PACKING</div>
+        <div style={{ fontSize: 22, fontWeight: "bold", marginBottom: 14 }}>{scene.label}の持ち物リスト</div>
+        {isTravel && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+            <span style={{ fontSize: 12, opacity: 0.85 }}>🌙 宿泊数：</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              {[1,2,3].map(n => (
+                <button key={n} onClick={() => changeNights(n)} style={{ padding: "5px 16px", borderRadius: 20, border: "2px solid rgba(255,255,255,0.7)", background: nights === n ? "white" : "transparent", color: nights === n ? scene.color : "white", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>{n}泊</button>
+              ))}
+            </div>
+            <span style={{ fontSize: 11, opacity: 0.7 }}>（{nights + 1}日間）</span>
+          </div>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ flex: 1, height: 6, borderRadius: 3, background: "rgba(255,255,255,0.3)" }}>
+            <div style={{ height: "100%", borderRadius: 3, background: "white", width: `${allTotal === 0 ? 0 : Math.round(allChecked / allTotal * 100)}%`, transition: "width 0.4s ease" }} />
+          </div>
+          <div style={{ fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>{allChecked}/{allTotal} 完了</div>
+        </div>
+      </div>
+
+      <div style={{ padding: "0 16px" }}>
+        {/* メンバー */}
+        <div style={{ marginTop: 20, marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: "#888", marginBottom: 8, fontWeight: "bold", letterSpacing: 1 }}>メンバー（タップで追加／削除）</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {TRAVELERS.map(t => {
+              const isActive = activeTravelers.includes(t.id);
+              return <button key={t.id} onClick={() => toggleTraveler(t.id)} style={{ padding: "6px 14px", borderRadius: 20, border: `2px solid ${t.color}`, background: isActive ? t.color : "white", color: isActive ? "white" : t.color, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{t.emoji} {t.label}</button>;
+            })}
+          </div>
+        </div>
+
+        {/* タブ */}
+        {activeTravelers.length > 0 && (
+          <div style={{ display: "flex", gap: 8, marginTop: 16, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+            {activeTravelers.map(tid => {
+              const t = TRAVELERS.find(x => x.id === tid);
+              const itms = items[tid] || [];
+              const done = itms.filter(i => i.checked).length;
+              const isSel = selectedTraveler === tid;
+              return (
+                <button key={tid} onClick={() => setSelectedTraveler(tid)} style={{ flexShrink: 0, padding: "10px 12px 10px 16px", borderRadius: 14, border: "none", background: isSel ? t.color : "white", color: isSel ? "white" : "#444", fontSize: 12, fontWeight: "bold", cursor: "pointer", boxShadow: isSel ? `0 4px 12px ${t.color}55` : "0 2px 8px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, minWidth: 76, position: "relative" }}>
+                  <span onClick={e => { e.stopPropagation(); toggleTraveler(tid); }} style={{ position: "absolute", top: 4, right: 4, width: 16, height: 16, borderRadius: "50%", background: isSel ? "rgba(255,255,255,0.35)" : "#e0e0e0", color: isSel ? "white" : "#888", fontSize: 10, fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>×</span>
+                  <span style={{ fontSize: 20 }}>{t.emoji}</span>
+                  <span>{t.label}</span>
+                  <span style={{ fontSize: 10, opacity: 0.8, background: isSel ? "rgba(255,255,255,0.25)" : "#f0f0f0", borderRadius: 10, padding: "1px 6px" }}>{done}/{itms.length}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {activeTravelers.includes(selectedTraveler) && (
+          <>
+            {/* プログレス */}
+            <div style={{ background: "white", borderRadius: 16, padding: "14px 16px", marginBottom: 14, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13 }}>
+                <span style={{ fontWeight: "bold", color: travelerData?.color }}>{travelerData?.emoji} {travelerData?.label}の準備</span>
+                <span style={{ color: "#666" }}>{progress}% 完了</span>
+              </div>
+              <div style={{ height: 8, background: "#f0f0f0", borderRadius: 4 }}>
+                <div style={{ height: "100%", borderRadius: 4, background: `linear-gradient(90deg, ${travelerData?.color}, ${travelerData?.color}99)`, width: `${progress}%`, transition: "width 0.4s ease" }} />
+              </div>
+              <div style={{ marginTop: 8, fontSize: 12, color: "#999" }}>{checkedCount}/{totalCount} アイテム</div>
+            </div>
+
+            {/* 基本データ編集バナー */}
+            {isBaseEditMode && (
+              <div style={{ background: "#FFF3CD", border: "1.5px solid #F2CC8F", borderRadius: 12, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 13, color: "#856404", fontWeight: "bold" }}>✏️ 基本データ編集中 — 変更は自動保存</span>
+                <button onClick={() => setIsBaseEditMode(false)} style={{ background: "#856404", color: "white", border: "none", borderRadius: 8, padding: "4px 12px", fontSize: 12, cursor: "pointer", fontWeight: "bold" }}>完了</button>
+              </div>
+            )}
+
+            {/* カテゴリフィルター */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
+                <button onClick={() => setSelectedCategory("all")} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${selectedCategory === "all" ? scene.color : "#ddd"}`, background: selectedCategory === "all" ? scene.color : "white", color: selectedCategory === "all" ? "white" : "#555", fontSize: 12, cursor: "pointer", fontWeight: "bold" }}>すべて</button>
+                {CATEGORIES.filter(c => usedCategoryIds.includes(c.id)).map(cat => (
+                  <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${selectedCategory === cat.id ? cat.color : "#ddd"}`, background: selectedCategory === cat.id ? cat.color : "white", color: selectedCategory === cat.id ? "white" : "#555", fontSize: 12, cursor: "pointer", fontWeight: "bold" }}>{cat.label}</button>
+                ))}
+              </div>
+              <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {!isBaseEditMode && (
+                  <button onClick={() => setShowForgottenOnly(!showForgottenOnly)} style={{ padding: "5px 14px", borderRadius: 20, border: `1.5px solid ${showForgottenOnly ? "#E07A5F" : "#ddd"}`, background: showForgottenOnly ? "#E07A5F" : "white", color: showForgottenOnly ? "white" : "#555", fontSize: 12, cursor: "pointer", fontWeight: "bold" }}>⚠️ 未チェックのみ表示</button>
+                )}
+                <button onClick={() => { setIsBaseEditMode(!isBaseEditMode); setShowForgottenOnly(false); }} style={{ padding: "5px 14px", borderRadius: 20, border: `1.5px solid ${isBaseEditMode ? "#856404" : "#ddd"}`, background: isBaseEditMode ? "#FFF3CD" : "white", color: isBaseEditMode ? "#856404" : "#888", fontSize: 12, cursor: "pointer", fontWeight: isBaseEditMode ? "bold" : "normal" }}>⚙️ 基本データを編集</button>
+              </div>
+            </div>
+
+            {/* アイテムリスト */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {CATEGORIES.filter(cat => selectedCategory === "all" || selectedCategory === cat.id).map(cat => {
+                const catItems = filteredItems.filter(i => i.category === cat.id);
+                if (catItems.length === 0) return null;
+                return (
+                  <div key={cat.id} style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, color: cat.color, fontWeight: "bold", letterSpacing: 1, marginBottom: 6, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                      {cat.label}
+                      <span style={{ fontSize: 10, background: cat.color + "22", color: cat.color, borderRadius: 10, padding: "1px 6px" }}>{catItems.filter(i => i.checked).length}/{catItems.length}</span>
+                    </div>
+                    {catItems.map(item => (
+                      <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "white", borderRadius: 12, padding: "11px 14px", marginBottom: 5, boxShadow: "0 1px 6px rgba(0,0,0,0.05)", borderLeft: `3px solid ${item.checked ? "#ddd" : cat.color}`, opacity: item.checked ? 0.5 : 1, transition: "all 0.2s" }}>
+                        <div onClick={() => toggleItem(selectedTraveler, item.id)} style={{ width: 22, height: 22, borderRadius: "50%", border: `2px solid ${item.checked ? "#ccc" : cat.color}`, background: item.checked ? cat.color : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: isBaseEditMode ? "default" : "pointer", flexShrink: 0, transition: "all 0.2s" }}>
+                          {item.checked && <span style={{ color: "white", fontSize: 12, fontWeight: "bold" }}>✓</span>}
+                        </div>
+                        {editingItemId === item.id ? (
+                          <>
+                            <input autoFocus value={editingName} onChange={e => setEditingName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") saveEdit(selectedTraveler, item.id); if (e.key === "Escape") setEditingItemId(null); }} style={{ flex: 1, fontSize: 13, border: `1.5px solid ${cat.color}`, borderRadius: 8, padding: "4px 8px", outline: "none" }} />
+                            <button onClick={() => saveEdit(selectedTraveler, item.id)} style={{ background: cat.color, color: "white", border: "none", borderRadius: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer", fontWeight: "bold" }}>保存</button>
+                            <button onClick={() => setEditingItemId(null)} style={{ background: "none", border: "none", color: "#aaa", fontSize: 16, cursor: "pointer", padding: "0 2px" }}>✕</button>
+                          </>
+                        ) : (
+                          <>
+                            <span style={{ flex: 1, fontSize: 13, lineHeight: 1.4, textDecoration: item.checked ? "line-through" : "none", color: item.checked ? "#aaa" : "#333" }}>{item.name}</span>
+                            <button onClick={() => startEdit(item)} style={{ background: "none", border: "none", color: "#ccc", fontSize: 13, cursor: "pointer", padding: "0 2px" }}>✏️</button>
+                            <button onClick={() => deleteItem(selectedTraveler, item.id)} style={{ background: "none", border: "none", color: "#ddd", fontSize: 16, cursor: "pointer", padding: "0 4px" }}>×</button>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+              {filteredItems.length === 0 && <div style={{ textAlign: "center", padding: "30px", color: "#bbb", fontSize: 14 }}>{showForgottenOnly ? "🎉 全部チェック済みです！" : "アイテムがありません"}</div>}
+            </div>
+
+            {/* アイテム追加 */}
+            <div style={{ background: "white", borderRadius: 16, padding: "16px", marginTop: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+              <div style={{ fontSize: 12, color: "#888", marginBottom: 10, fontWeight: "bold" }}>{isBaseEditMode ? "＋ 基本データにアイテムを追加" : "＋ アイテムを追加（今回のみ）"}</div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <input value={newItemName} onChange={e => setNewItemName(e.target.value)} onKeyDown={e => e.key === "Enter" && addItem()} placeholder="持ち物の名前" style={{ flex: 1, border: "1.5px solid #eee", borderRadius: 10, padding: "8px 12px", fontSize: 14, outline: "none" }} />
+                <button onClick={addItem} style={{ background: travelerData?.color || scene.color, color: "white", border: "none", borderRadius: 10, padding: "8px 16px", fontWeight: "bold", cursor: "pointer", fontSize: 18 }}>＋</button>
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {CATEGORIES.map(cat => (
+                  <button key={cat.id} onClick={() => setNewItemCategory(cat.id)} style={{ padding: "4px 10px", borderRadius: 14, border: `1.5px solid ${newItemCategory === cat.id ? cat.color : "#eee"}`, background: newItemCategory === cat.id ? cat.color : "white", color: newItemCategory === cat.id ? "white" : "#777", fontSize: 11, cursor: "pointer" }}>{cat.label}</button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ==================== ホーム画面 ====================
+function Home({ onSelectScene }) {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ fontSize: 40, marginBottom: 8 }}>👜</div>
+      <h1 style={{ fontSize: 24, fontWeight: "bold", color: "#333", marginBottom: 4 }}>持ち物リスト</h1>
+      <p style={{ fontSize: 14, color: "#999", marginBottom: 40 }}>シーンを選んでください</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", maxWidth: 340 }}>
+        {SCENES.map(scene => (
+          <button key={scene.id} onClick={() => onSelectScene(scene)} style={{ background: scene.grad, color: "white", border: "none", borderRadius: 20, padding: "24px 28px", fontSize: 20, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", gap: 16, boxShadow: `0 6px 20px ${scene.color}44`, transition: "transform 0.15s", textAlign: "left" }}
+            onMouseDown={e => e.currentTarget.style.transform = "scale(0.97)"}
+            onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
+            onTouchStart={e => e.currentTarget.style.transform = "scale(0.97)"}
+            onTouchEnd={e => e.currentTarget.style.transform = "scale(1)"}
+          >
+            <span style={{ fontSize: 36 }}>{scene.emoji}</span>
+            <div>
+              <div>{scene.label}</div>
+              <div style={{ fontSize: 13, opacity: 0.8, fontWeight: "normal", marginTop: 2 }}>
+                {scene.id === "travel" ? "旅行の持ち物チェック" : "入院時の持ち物チェック"}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ==================== メインApp ====================
+function App() {
+  const [currentScene, setCurrentScene] = useState(null);
+  if (currentScene) return <PackingList scene={currentScene} onBack={() => setCurrentScene(null)} />;
+  return <Home onSelectScene={setCurrentScene} />;
+}
+
+ReactDOM.render(<App />, document.getElementById("root"));
+</script>
+</body>
+</html>
