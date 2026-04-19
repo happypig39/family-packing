@@ -567,27 +567,76 @@ function PackingList({ scene, onBack }) {
 // ==================== ホーム画面 ====================
 function Home({ onSelectScene }) {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ fontSize: 40, marginBottom: 8 }}>👜</div>
-      <h1 style={{ fontSize: 24, fontWeight: "bold", color: "#333", marginBottom: 4 }}>持ち物リスト</h1>
-      <p style={{ fontSize: 14, color: "#999", marginBottom: 40 }}>シーンを選んでください</p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", maxWidth: 340 }}>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, background: "linear-gradient(160deg, #EEF2F0 0%, #E8EDF5 100%)" }}>
+      {/* 北欧風SVGアイコン */}
+      <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 12 }}>
+        {/* 背景円 */}
+        <circle cx="50" cy="50" r="48" fill="#DDE8E4"/>
+        {/* 枝 */}
+        <path d="M18 68 Q40 62 82 66" stroke="#A8937A" strokeWidth="3" strokeLinecap="round" fill="none"/>
+        {/* 枝の小枝 */}
+        <path d="M35 62 Q33 55 30 50" stroke="#A8937A" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+        <path d="M60 63 Q62 56 65 52" stroke="#A8937A" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+        {/* 小葉（左） */}
+        <ellipse cx="28" cy="47" rx="5" ry="3" fill="#8FB5A8" transform="rotate(-40 28 47)"/>
+        <ellipse cx="32" cy="49" rx="5" ry="3" fill="#7BA898" transform="rotate(-20 32 49)"/>
+        {/* 小葉（右） */}
+        <ellipse cx="67" cy="49" rx="5" ry="3" fill="#8FB5A8" transform="rotate(40 67 49)"/>
+        <ellipse cx="63" cy="51" rx="5" ry="3" fill="#7BA898" transform="rotate(20 63 51)"/>
+        {/* 鳥の体 */}
+        <ellipse cx="50" cy="50" rx="16" ry="12" fill="#B8CEC8"/>
+        {/* 鳥の頭 */}
+        <circle cx="66" cy="42" r="10" fill="#C8D8D4"/>
+        {/* くちばし */}
+        <path d="M75 41 L82 39 L75 43Z" fill="#C4A882"/>
+        {/* 目 */}
+        <circle cx="69" cy="40" r="2.5" fill="#5A5A5A"/>
+        <circle cx="70" cy="39.5" r="1" fill="white"/>
+        {/* 翼 */}
+        <path d="M36 50 Q28 40 34 34 Q42 44 50 48Z" fill="#9AB8B0"/>
+        <path d="M36 50 Q30 45 35 38 Q41 46 50 48Z" fill="#8AAAA2"/>
+        {/* 尾羽 */}
+        <path d="M34 54 Q22 58 18 64" stroke="#9AB8B0" strokeWidth="3" strokeLinecap="round" fill="none"/>
+        <path d="M34 56 Q24 62 22 70" stroke="#8AAAA2" strokeWidth="3" strokeLinecap="round" fill="none"/>
+        <path d="M35 58 Q27 65 28 73" stroke="#B8CEC8" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+        {/* 胸の模様 */}
+        <ellipse cx="56" cy="52" rx="6" ry="4" fill="#D4C4B8" opacity="0.7"/>
+        {/* 足 */}
+        <path d="M52 62 L50 68 M50 68 L47 72 M50 68 L53 72" stroke="#C4A882" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+        <path d="M58 63 L57 69 M57 69 L54 73 M57 69 L60 73" stroke="#C4A882" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+        {/* 飾り小花 */}
+        <circle cx="22" cy="56" r="4" fill="#D4B8C4"/>
+        <circle cx="22" cy="56" r="2" fill="#C4A8B8"/>
+        <circle cx="78" cy="60" r="4" fill="#D4B8C4"/>
+        <circle cx="78" cy="60" r="2" fill="#C4A8B8"/>
+      </svg>
+
+      <h1 style={{ fontSize: 22, fontWeight: "bold", color: "#4A6B60", marginBottom: 4, letterSpacing: 1 }}>持ち物リスト</h1>
+      <p style={{ fontSize: 13, color: "#9BB0A8", marginBottom: 36 }}>シーンを選んでください</p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%", maxWidth: 320 }}>
         {SCENES.map(scene => (
-          <button key={scene.id} onClick={() => onSelectScene(scene)} style={{ background: scene.grad, color: "white", border: "none", borderRadius: 20, padding: "24px 28px", fontSize: 20, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", gap: 16, boxShadow: `0 6px 20px ${scene.color}44`, transition: "transform 0.15s", textAlign: "left" }}
+          <button key={scene.id} onClick={() => onSelectScene(scene)}
+            style={{ background: scene.grad, color: "white", border: "none", borderRadius: 18, padding: "20px 24px", fontSize: 17, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", gap: 16, boxShadow: `0 4px 16px ${scene.color}44`, transition: "transform 0.15s", textAlign: "left" }}
             onMouseDown={e => e.currentTarget.style.transform = "scale(0.97)"}
             onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
             onTouchStart={e => e.currentTarget.style.transform = "scale(0.97)"}
             onTouchEnd={e => e.currentTarget.style.transform = "scale(1)"}
           >
-            <span style={{ fontSize: 36 }}>{scene.emoji}</span>
+            <span style={{ fontSize: 32 }}>{scene.emoji}</span>
             <div>
               <div>{scene.label}</div>
-              <div style={{ fontSize: 13, opacity: 0.8, fontWeight: "normal", marginTop: 2 }}>
+              <div style={{ fontSize: 12, opacity: 0.85, fontWeight: "normal", marginTop: 2 }}>
                 {scene.id === "travel" ? "旅行の持ち物チェック" : "入院時の持ち物チェック"}
               </div>
             </div>
           </button>
         ))}
+      </div>
+
+      {/* 北欧風デコレーション */}
+      <div style={{ marginTop: 40, display: "flex", gap: 10, opacity: 0.4 }}>
+        {["🌿","❄️","🌸","❄️","🌿"].map((e, i) => <span key={i} style={{ fontSize: 14 }}>{e}</span>)}
       </div>
     </div>
   );
