@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: linear-gradient(135deg, #FFF8F0 0%, #F0F4FF 100%); font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; min-height: 100vh; }
+  body { background: linear-gradient(135deg, #EEF2F0 0%, #E8EDF5 100%); font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; min-height: 100vh; }
   input, button { font-family: inherit; }
   ::-webkit-scrollbar { height: 4px; }
   ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
@@ -22,29 +22,29 @@ const { useState, useEffect } = React;
 
 // ==================== シーン定義 ====================
 const SCENES = [
-  { id: "travel", label: "旅行", emoji: "✈️", color: "#4A90D9", grad: "linear-gradient(135deg, #4A90D9 0%, #6B5CE7 100%)" },
-  { id: "hospital", label: "入院", emoji: "🏥", color: "#E07A5F", grad: "linear-gradient(135deg, #E07A5F 0%, #C0392B 100%)" },
+  { id: "travel", label: "旅行", emoji: "✈️", color: "#6B9BAF", grad: "linear-gradient(135deg, #7DAFC4 0%, #8FB8C8 100%)" },
+  { id: "hospital", label: "入院", emoji: "🏥", color: "#8C9EAF", grad: "linear-gradient(135deg, #9DB4C0 0%, #A8BFC8 100%)" },
 ];
 
 // ==================== 旅行データ ====================
 const TRAVEL_TRAVELERS = [
-  { id: "adult_f", label: "母", emoji: "👩", color: "#E07A5F" },
-  { id: "adult_m", label: "父", emoji: "🧑", color: "#4A90D9" },
-  { id: "child4", label: "こはる", emoji: "👧", color: "#FF6B9D" },
-  { id: "child2", label: "みゆ", emoji: "👶", color: "#9B59B6" },
-  { id: "kids_common", label: "子ども共通", emoji: "👧👶", color: "#2EC4B6" },
+  { id: "adult_f", label: "母", emoji: "👩", color: "#C4847A" },
+  { id: "adult_m", label: "父", emoji: "🧑", color: "#7A9CB8" },
+  { id: "child4", label: "こはる", emoji: "👧", color: "#C49AAF" },
+  { id: "child2", label: "みゆ", emoji: "👶", color: "#9B8FC4" },
+  { id: "kids_common", label: "子ども共通", emoji: "👧👶", color: "#7AB8A8" },
 ];
 
 const TRAVEL_CATEGORIES = [
-  { id: "docs", label: "📄 重要書類・医療", color: "#4A90D9" },
-  { id: "hygiene", label: "🧴 衛生用品", color: "#81B29A" },
-  { id: "food", label: "🍱 食事用品", color: "#FF9F1C" },
-  { id: "clothes", label: "👕 衣類・服飾", color: "#E07A5F" },
-  { id: "move", label: "🚗 移動・便利グッズ", color: "#6B5CE7" },
-  { id: "play", label: "🎮 遊び・暇つぶし", color: "#F2CC8F" },
-  { id: "backpack", label: "🎒 リュック", color: "#2EC4B6" },
-  { id: "bag", label: "👜 バッグ・手荷物", color: "#C77DFF" },
-  { id: "beauty", label: "💄 女性向け", color: "#FF6B9D" },
+  { id: "docs", label: "📄 重要書類・医療", color: "#7A9CB8" },
+  { id: "hygiene", label: "🧴 衛生用品", color: "#8FB5A8" },
+  { id: "food", label: "🍱 食事用品", color: "#C4A882" },
+  { id: "clothes", label: "👕 衣類・服飾", color: "#C4847A" },
+  { id: "move", label: "🚗 移動・便利グッズ", color: "#8B9CB8" },
+  { id: "play", label: "🎮 遊び・暇つぶし", color: "#B8A87A" },
+  { id: "backpack", label: "🎒 リュック", color: "#7AB8A8" },
+  { id: "bag", label: "👜 バッグ・手荷物", color: "#A88FB8" },
+  { id: "beauty", label: "💄 女性向け", color: "#C49AAF" },
 ];
 
 const TRAVEL_NIGHTS_DEPENDENT = [
@@ -226,18 +226,18 @@ function generateTravelItems(n) {
 
 // ==================== 入院データ ====================
 const HOSPITAL_TRAVELERS = [
-  { id: "child", label: "子ども", emoji: "🧒", color: "#81B29A" },
-  { id: "mother", label: "付き添い母", emoji: "👩", color: "#E07A5F" },
+  { id: "child", label: "子ども", emoji: "🧒", color: "#8FB5A8" },
+  { id: "mother", label: "付き添い母", emoji: "👩", color: "#C4847A" },
 ];
 
 const HOSPITAL_CATEGORIES = [
-  { id: "docs", label: "📄 重要書類・医療", color: "#4A90D9" },
-  { id: "hygiene", label: "🧴 衛生用品", color: "#81B29A" },
-  { id: "food", label: "🍱 食事・飲み物", color: "#FF9F1C" },
-  { id: "clothes", label: "👕 衣類", color: "#E07A5F" },
-  { id: "play", label: "🎮 遊び・暇つぶし", color: "#F2CC8F" },
-  { id: "work", label: "💼 仕事道具", color: "#6B5CE7" },
-  { id: "bag", label: "👜 手荷物", color: "#C77DFF" },
+  { id: "docs", label: "📄 重要書類・医療", color: "#7A9CB8" },
+  { id: "hygiene", label: "🧴 衛生用品", color: "#8FB5A8" },
+  { id: "food", label: "🍱 食事・飲み物", color: "#C4A882" },
+  { id: "clothes", label: "👕 衣類", color: "#C4847A" },
+  { id: "play", label: "🎮 遊び・暇つぶし", color: "#B8A87A" },
+  { id: "work", label: "💼 仕事道具", color: "#8B9CB8" },
+  { id: "bag", label: "👜 手荷物", color: "#A88FB8" },
 ];
 
 function generateHospitalItems() {
